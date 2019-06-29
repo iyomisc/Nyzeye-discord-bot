@@ -36,6 +36,7 @@ class NyzoWatcher:
             status = await self.status()
             for verifier in verifiers:
                 if verifier:
+                    verifier = verifier[:4] + "." + verifier[-4:]
                     if verifier not in status:
                         msg += "No known Verifier with id {}\n".format(verifier)
                     else:
