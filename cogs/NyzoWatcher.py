@@ -9,7 +9,6 @@ import sys
 # import requests
 import discord
 from discord.ext import commands
-
 from modules.WatchDB import WatchDb
 
 STATUS_PATH = 'api/status.json'

@@ -5,6 +5,7 @@ Nyzeye Discord Bot for Nyzo Cryptocurrency
 import asyncio
 from discord.ext import commands
 from cogs.NyzoWatcher import NyzoWatcher
+from cogs.Nyzo import Nyzo
 from modules.config import CONFIG, SHORTCUTS
 
 __version__ = '0.10'
@@ -74,6 +75,7 @@ async def background_task(cog_list):
 if __name__ == '__main__':
     nyzo_watcher = NyzoWatcher(client)
     client.add_cog(nyzo_watcher)
+    client.add_cog(Nyzo(client))
 
     client.loop.create_task(background_task([nyzo_watcher]))
 
