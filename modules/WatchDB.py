@@ -79,7 +79,7 @@ class WatchDb:
     async def get_verifiers_status(self, bot):
         self.cursor.execute("select user_id, users_info.short_id, nickname from users_info join verifiers_info where"
                             " users_info.short_id=verifiers_info.short_id and status=?",
-                            (int("1"*(SUCCESSIVE_FAILS)+"0"),))
+                            (int("1"*(SUCCESSIVE_FAILS-1)+"0"),))
         stopped_verifiers = self.cursor.fetchall()
         for verifier in stopped_verifiers:
             member = get(bot.get_all_members(), id=verifier[0])
