@@ -75,7 +75,7 @@ class NyzoWatcher:
         if len(verifier_list) != 1:
             msg += "s"
         msg += "\n"
-        for verifier in verifier_list:
+        for index, verifier in enumerate(verifier_list):
             char = "-"
             if status[verifier[0]][0] >= 2:
                 char = "▸"
@@ -84,6 +84,9 @@ class NyzoWatcher:
             if status[verifier[0]][0] >= 2:
                 text = "**" + text + "**"
             msg += text + "\n"
+            if not (index + 1) % 20:
+                await self.bot.say(msg)
+                msg = ""
 
         await self.bot.say(msg)
 
