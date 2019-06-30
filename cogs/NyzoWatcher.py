@@ -32,19 +32,18 @@ class NyzoWatcher:
     async def watch(self, ctx, *verifiers):
         """Adds a verifier to watch"""
         try:
-            msg = ''
             status = await self.status()
+            await self.bot.say("Verifiers:")
             for verifier in verifiers:
                 if verifier:
                     verifier = verifier[:4] + "." + verifier[-4:]
                     if verifier not in status:
-                        msg += "No known Verifier with id {}\n".format(verifier)
+                        msg = "No known Verifier with id {}\n".format(verifier)
                     else:
                         self.bot.watch_module.watch(ctx.message.author.id, verifier, status)
-                        msg += "Added {}\n".format(verifier)
-            em = discord.Embed(description=msg, colour=discord.Colour.green())
-            em.set_author(name="Verifiers:")
-            await self.bot.say(embed=em)
+                        msg = "Added {}\n".format(verifier)
+                    await self.bot.say(msg)
+
         except Exception as e:
             print(e)
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -54,14 +53,13 @@ class NyzoWatcher:
     @commands.command(name='unwatch', brief="Removes an verifier from the watch list", pass_context=True)
     async def unwatch(self, ctx, *verifiers):
         """Removes an verifier from the watch list"""
-        msg = ''
+        await self.bot.say("Verifiers:")
         for verifier in verifiers:
             if verifier:
                 self.bot.watch_module.unwatch(ctx.message.author.id, verifier)
-                msg += "Removed {}\n".format(verifier)
-        em = discord.Embed(description=msg, colour=discord.Colour.green())
-        em.set_author(name="Verifiers:")
-        await self.bot.say(embed=em)
+                msg = "Removed {}\n".format(verifier)
+                await self.bot.say(msg)
+
 
     def fill(self, text, final_length, char=" "):
         return text + char * (final_length - len(text))
