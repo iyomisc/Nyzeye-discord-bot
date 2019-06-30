@@ -5,8 +5,6 @@ NyzoWatcher cogs
 import json
 import os
 import sys
-
-# import requests
 import discord
 from discord.ext import commands
 from modules.WatchDB import WatchDb
@@ -59,7 +57,6 @@ class NyzoWatcher:
                 self.bot.watch_module.unwatch(ctx.message.author.id, verifier)
                 msg = "Removed {}\n".format(verifier)
                 await self.bot.say(msg)
-
 
     def fill(self, text, final_length, char=" "):
         return text + char * (final_length - len(text))
