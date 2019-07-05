@@ -18,9 +18,10 @@ class Nyzo:
         self.last_update = 0
 
     async def get_all_balances(self):
-        if self.last_update < time.time() - 60 * 5:  # 5 min cache
+        if self.last_update < time.time() - 60 * 1:  # 1 min cache
             with open(BALANCES_PATH) as f:
                 self.balances = json.load(f)
+            self.last_update = time.time()
         return self.balances
 
     @commands.command(name='price', brief="Shows Nyzo price", pass_context=True)

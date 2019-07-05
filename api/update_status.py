@@ -20,6 +20,7 @@ while True:
                 balance = balance.replace("  ", " ")
             balance = balance.split(" ")
             short_id = balance[0][:4] + "." + balance[0][-4:]
+            balance[1] = float(balance[1][1:])
             balances[short_id] = balance
         with open("balances.json", "w") as f:
             json.dump(balances, f)

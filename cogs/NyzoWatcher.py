@@ -66,23 +66,28 @@ class NyzoWatcher:
         """print the current list"""
         status = await self.status()
         verifier_list = self.bot.watch_module.get_list(ctx.message.author.id)
+        balances = await self.bot.cogs["Nyzo"].get_all_balances()
+
         msg = "You are watching {} verifier".format(len(verifier_list))
         if len(verifier_list) != 1:
             msg += "s"
         msg += "\n"
+        total_balance = 0
         for index, verifier in enumerate(verifier_list):
             char = "-"
             if status[verifier[0]][0] >= 2:
                 char = "▸"
-            text = "`{} {}   {} | {}`".format(char, self.fill(verifier[0], 10), str(status[verifier[0]][0]),
-                                              verifier[2])
+            balance = balances.get(verifier[0], [None, 0])[1]
+            total_balance += balance
+            text = "`{} {}  ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), self.fill(str(balance), 15),
+                                                 str(status[verifier[0]][0]), verifier[2])
             if status[verifier[0]][0] >= 2:
                 text = "**" + text + "**"
             msg += text + "\n"
             if not (index + 1) % 20:
                 await self.bot.say(msg)
                 msg = ""
-
+        msg += "Total balance: ∩{}".format(total_balance)
         await self.bot.say(msg)
 
     async def background_task(self):
