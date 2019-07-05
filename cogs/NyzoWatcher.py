@@ -80,7 +80,7 @@ class NyzoWatcher:
                 char = "▸"
             balance = balances.get(verifier[0], [None, 0])[1]
             total_balance += balance
-            text = "`{} {}  ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), self.fill(str(balance), 15),
+            text = "`{} {}  ∩{0.2f} {} | {}`".format(char, self.fill(verifier[0], 10), self.fill(str(balance), 15),
                                                  str(status[verifier[0]][0]), verifier[2])
             if status[verifier[0]][0] >= 2:
                 text = "**" + text + "**"
@@ -88,7 +88,7 @@ class NyzoWatcher:
             if not (index + 1) % 20:
                 await self.bot.say(msg)
                 msg = ""
-        msg += "Total balance: ∩{}".format(total_balance)
+        msg += "Total balance: ∩{0.2f}".format(total_balance)
         await self.bot.say(msg)
 
     async def background_task(self):
