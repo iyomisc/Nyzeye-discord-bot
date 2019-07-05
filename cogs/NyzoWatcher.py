@@ -54,6 +54,7 @@ class NyzoWatcher:
         await self.bot.say("Verifiers:")
         for verifier in verifiers:
             if verifier:
+                verifier = verifier[:4] + "." + verifier[-4:]
                 self.bot.watch_module.unwatch(ctx.message.author.id, verifier)
                 msg = "Removed {}\n".format(verifier)
                 await self.bot.say(msg)
