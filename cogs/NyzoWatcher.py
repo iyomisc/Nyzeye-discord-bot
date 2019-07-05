@@ -88,7 +88,7 @@ class NyzoWatcher:
             if not (index + 1) % 20:
                 await self.bot.say(msg)
                 msg = ""
-        msg += "Total balance: ∩{0.2f}".format(total_balance)
+        msg += "Total balance: ∩{:0.2f}".format(total_balance)
         await self.bot.say(msg)
 
     async def background_task(self):
