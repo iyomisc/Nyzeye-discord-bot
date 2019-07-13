@@ -53,6 +53,15 @@ class Nyzo:
         balances = await self.get_all_balances()
         short_id = id[:4] + "." + id[-4:]
         if short_id in balances:
+            message = "Balance of {}:\n".format(id)
+            message += str(balances[short_id][1])
+        else:
+            message = "No such id: {}".format(id)
+
+        await self.bot.say(message)
+
+        """
+        if short_id in balances:
             em = discord.Embed(description=balances[short_id][1], colour=discord.Colour.green())
             em.set_author(name="Balance of {}:".format(id))
             await self.bot.say(embed=em)
@@ -60,3 +69,4 @@ class Nyzo:
             em = discord.Embed(colour=discord.Colour.red())
             em.set_author(name="No such id: {}".format(id))
             await self.bot.say(embed=em)
+        """
