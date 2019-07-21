@@ -25,6 +25,7 @@ class WatchDb:
         self.cursor.execute("CREATE INDEX IF NOT EXISTS short_id on users_info(short_id);")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS timestamp on verifiers_info(timestamp);")
         self.cursor.execute("CREATE INDEX IF NOT EXISTS verifiers on verifiers_info(short_id, status);")
+        self.cursor.execute("UPDATE verifiers_info SET timestamp=?;", (int(time.time()), ))
         self.db.commit()
 
     def stop(self):
