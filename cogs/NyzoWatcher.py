@@ -63,10 +63,10 @@ class NyzoWatcher:
         return text + char * (final_length - len(text))
 
     @commands.command(name='list', brief="shows your watch list", pass_context=True)
-    async def list(self, ctx):
+    async def list(self, ctx, param=""):
         """print the current list"""
         status = await self.status()
-        verifier_list = self.bot.watch_module.get_list(ctx.message.author.id)
+        verifier_list = self.bot.watch_module.get_list(ctx.message.author.id, param=param)
         balances = await self.bot.cogs["Nyzo"].get_all_balances()
 
         msg = "You are watching {} verifier".format(len(verifier_list))
@@ -77,11 +77,15 @@ class NyzoWatcher:
         for index, verifier in enumerate(verifier_list):
             char = "-"
             if status[verifier[0]][0] >= 2:
-                char = "▸"
+                char = "❌"
             balance = balances.get(verifier[0], [None, 0])[1]
             total_balance += balance
-            text = "`{} {}  ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), self.fill(str(balance), 15),
-                                                 str(status[verifier[0]][0]), verifier[2])
+            if status[verifier[0]][2] == 0:
+                icon = "🕐"
+            else:
+                icon = "✅"
+            text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
+                                                  str(status[verifier[0]][0]), verifier[2])
             if status[verifier[0]][0] >= 2:
                 text = "**" + text + "**"
             msg += text + "\n"

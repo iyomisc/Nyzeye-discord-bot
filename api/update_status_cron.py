@@ -3,6 +3,7 @@ import urllib.request
 
 
 url = "https://nyzo.co/meshUpdate?s=0"
+queue_url = "https://nyzo.co/queueUpdate/20000"
 balance_url = "https://www.nyzo.co/balanceListPlain/{}"
 try:
     data = urllib.request.urlopen(url).read().decode("utf-8")
@@ -35,7 +36,20 @@ try:
         a = line.split("id=")[1].split('" target="_blank" style="')
         b = a[1].split('">')
         c = b[1].split("</a>")
-        verifiers[a[0]] = [color_to_status[b[0]], c[0]]
+        verifiers[a[0]] = [color_to_status[b[0]], c[0], 1]
+
+    data = urllib.request.urlopen(queue_url).read().decode("utf-8")
+    data = data.split('"queue-container">')[1]
+    data = data.split("</div>")[0]
+    data = data.split(", ")
+
+    for line in data:
+        line = line.replace("font-weight: bold;", "")
+        a = line.split("id=")[1].split('" target="_blank" style="')
+        b = a[1].split('">')
+        c = b[1].split("</a>")
+        verifiers[a[0]] = [color_to_status[b[0]], c[0], 0]
+        #print(verifiers[a[0]])
 
     with open("status.json", "w") as f:
         json.dump(verifiers, f)
