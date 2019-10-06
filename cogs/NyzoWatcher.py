@@ -69,7 +69,7 @@ class NyzoWatcher:
         verifier_list = self.bot.watch_module.get_list(ctx.message.author.id, param=param)
         balances = await self.bot.cogs["Nyzo"].get_all_balances()
 
-        msg = "You are watching {} verifier".format(len(verifier_list))
+        msg = "You are watching {} {} verifier".format(len(verifier_list), param)
         if len(verifier_list) != 1:
             msg += "s"
         msg += "\n"

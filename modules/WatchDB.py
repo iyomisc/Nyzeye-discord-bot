@@ -81,7 +81,7 @@ class WatchDb:
                 verifier[0] = 0
 
             self.cursor.execute("INSERT OR IGNORE into verifiers_info values(?,?,?,?,0)", (short_id[0], verifier[1], 0,
-                                                                                         current_time))
+                                                                                           current_time))
             self.cursor.execute("UPDATE verifiers_info SET status=cast(status/10 as int)+?, timestamp=?, in_mesh=?"
                                 " WHERE short_id=?", ((10**SUCCESSIVE_FAILS)*verifier[0], current_time, verifier[2],
                                                       short_id[0]))
