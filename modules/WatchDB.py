@@ -44,7 +44,7 @@ class WatchDb:
     async def update_verifiers_status(self, verifiers_data, bot):
         self.cursor.execute("select user_id, users_info.short_id from users_info join verifiers_info where"
                             " users_info.short_id=verifiers_info.short_id and timestamp < ?",
-                            (int(time.time() - 1 * 60 * SUCCESSIVE_FAILS),))
+                            (int(time.time() - 100 * 60 * SUCCESSIVE_FAILS),))
         removed_verifiers = self.cursor.fetchall()
         ip_list = "("
         for verifier in removed_verifiers:
@@ -57,7 +57,7 @@ class WatchDb:
         ip_list += ")"
         self.cursor.execute("DELETE FROM users_info WHERE short_id in {}".format(ip_list))
         self.cursor.execute("DELETE FROM verifiers_info WHERE timestamp < ?",
-                            (int(time.time() - 1 * 60 * SUCCESSIVE_FAILS),))
+                            (int(time.time() - 100 * 60 * SUCCESSIVE_FAILS),))
         self.db.commit()
 
         self.cursor.execute("select user_id, users_info.short_id from users_info join verifiers_info where"
