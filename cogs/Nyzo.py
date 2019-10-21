@@ -26,7 +26,7 @@ class Nyzo:
 
     @commands.command(name='price', brief="Shows Nyzo price", pass_context=True)
     async def price(self, ctx):
-        MARKETS = ["citex", "qtrade", "bihodl"]  # Markets we want to list
+        MARKETS = ["citex", "qtrade", "bihodl", "qbtc"]  # Markets we want to list
         url = "https://api.coingecko.com/api/v3/coins/nyzo/tickers"
         api = await async_get(url, is_json=True)
         sorted_api = sorted(api["tickers"], key=lambda ticker: ticker["market"]["identifier"] + " " + ticker["target"])
