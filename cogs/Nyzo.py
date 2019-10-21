@@ -32,6 +32,7 @@ class Nyzo:
         sorted_api = sorted(api["tickers"], key=lambda ticker: ticker["market"]["identifier"] + " " + ticker["target"])
         prices = []
         for market in sorted_api:
+            print(market["market"]["identifier"])
             if market["market"]["identifier"] in MARKETS:
                 if market["target"] == "BTC":
                     prices.append(
