@@ -32,7 +32,6 @@ class Nyzo:
         sorted_api = sorted(api["tickers"], key=lambda ticker: ticker["market"]["identifier"] + " " + ticker["target"])
         prices = []
         for market in sorted_api:
-            print(market["market"]["identifier"])
             if market["market"]["identifier"] in MARKETS:
                 if market["target"] == "BTC":
                     prices.append(
@@ -45,6 +44,10 @@ class Nyzo:
                 if market["target"] == "USDT":
                     prices.append(
                         "▸ {:0.8f} USDT or {:0.3f} USD on {}".format(market["last"], market["converted_last"]["usd"],
+                                                                     market["market"]["name"]))
+                if market["target"] == "CNYT":
+                    prices.append(
+                        "▸ {:0.8f} CNYT or {:0.3f} USD on {}".format(market["last"], market["converted_last"]["usd"],
                                                                      market["market"]["name"]))
         prices = "\n".join(prices)
         await self.bot.say("Nyzo price is:\n{}".format(prices))
