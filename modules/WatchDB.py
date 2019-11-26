@@ -45,6 +45,7 @@ class WatchDb:
         self.cursor.execute("select user_id, users_info.short_id from users_info join verifiers_info where"
                             " users_info.short_id=verifiers_info.short_id and timestamp < ?",
                             (int(time.time() - 100 * 60 * SUCCESSIVE_FAILS),))
+        """
         removed_verifiers = self.cursor.fetchall()
         ip_list = "("
         for verifier in removed_verifiers:
@@ -59,7 +60,7 @@ class WatchDb:
         self.cursor.execute("DELETE FROM verifiers_info WHERE timestamp < ?",
                             (int(time.time() - 100 * 60 * SUCCESSIVE_FAILS),))
         self.db.commit()
-
+        """
         self.cursor.execute("select user_id, users_info.short_id from users_info join verifiers_info where"
                             " users_info.short_id=verifiers_info.short_id and in_mesh = 0")
         queue_verifiers = self.cursor.fetchall()
