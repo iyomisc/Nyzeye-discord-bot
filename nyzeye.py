@@ -51,11 +51,17 @@ async def on_message(message):
     if message.server and message.channel.id not in CONFIG['bot_channel']:
         print('Unauth channel')
     else:
+        print("answering")
         await client.add_reaction(message, '⏳')  # Hourglass
         try:
             # only here, will process commands
             await client.process_commands(message)
+            print("Success")
+        except Exception as e:
+            print(e)
+
         finally:
+
             await client.remove_reaction(message, '⏳', client.user)  # Hourglass
 
 
