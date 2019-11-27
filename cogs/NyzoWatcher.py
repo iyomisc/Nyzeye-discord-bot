@@ -48,6 +48,23 @@ class NyzoWatcher:
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
 
+    @commands.command(name='recover', brief="Allows to recover your watch list with the nyzeye list",
+                      pass_context=True)
+    async def recover(self, ctx, *verifiers):
+        """recovers the watch list"""
+        to_watch = []
+        try:
+            for verifier in verifiers:
+                if len(verifier) == 9 and verifier[4] == ".":
+                    to_watch.append(verifier)
+            await self.watch.callback(self, ctx, *to_watch)
+
+        except Exception as e:
+            print(e)
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+
     @commands.command(name='unwatch', brief="Removes an verifier from the watch list", pass_context=True)
     async def unwatch(self, ctx, *verifiers):
         """Removes an verifier from the watch list"""
