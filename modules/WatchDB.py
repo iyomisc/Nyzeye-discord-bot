@@ -107,3 +107,12 @@ class WatchDb:
             query += " and in_mesh = 1"
         self.cursor.execute(query, (user_id,))
         return self.cursor.fetchall()
+
+    async def update_nickname(self, verifiers_data):
+        verifiers = self.cursor.execute("select short_id, nickname from verifiers_info")
+        for verifier in verifiers:
+            if verifier[0] in verifiers_data:
+                nickname = verifiers_data[verifier[0]][2]
+                if nickname != verifier[1]:
+                    self.cursor.execute("update verifiers_info set nickname=? where short_id=?", (nickname, verifier[0]))
+        self.db.commit()

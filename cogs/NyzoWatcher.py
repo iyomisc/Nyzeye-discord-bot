@@ -8,9 +8,9 @@ import sys
 import discord
 from discord.ext import commands
 from modules.WatchDB import WatchDb
-
+import time
 STATUS_PATH = 'api/status.json'
-
+LAST_NAME_UPDATE = 0
 
 class NyzoWatcher:
     """Nyzo verifier specific Cogs"""
@@ -116,3 +116,5 @@ class NyzoWatcher:
         status = await self.status()
         await self.bot.watch_module.update_verifiers_status(status, self.bot)
         await self.bot.watch_module.get_verifiers_status(self.bot)
+        if time.time() > LAST_NAME_UPDATE + 3600:
+            await self.bot.watch_module.update_nickname(status)
