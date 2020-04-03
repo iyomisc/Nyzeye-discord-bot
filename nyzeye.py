@@ -6,14 +6,16 @@ import asyncio
 from discord.ext import commands
 from cogs.NyzoWatcher import NyzoWatcher
 from cogs.Nyzo import Nyzo
+from cogs.extra import Extra
 from modules.config import CONFIG, SHORTCUTS
 
-__version__ = '0.10'
+__version__ = '0.12'
 
 BOT_PREFIX = 'Nyzeye '
 
 client = commands.Bot(command_prefix=BOT_PREFIX)
 
+CHECKING_BANS = False
 
 @client.event
 async def on_ready():
@@ -33,6 +35,8 @@ async def on_ready():
 
     # 625345529639075872
     #await client.http.delete_message(CONFIG['bot_channel'][0], '625345529639075872')
+    client.loop.create_task(monitor_impersonators())
+
 
 @client.event
 async def on_message(message):
@@ -42,6 +46,7 @@ async def on_message(message):
             message.content = message.content.replace(search, replace)
 
     if not message.content.startswith(BOT_PREFIX):
+        print("not for me", message.content)
         return
     if client.user.id != message.author.id:  # check not a bot message
         print("Got {} from {}".format(message.content, message.author.display_name))
@@ -82,11 +87,60 @@ async def background_task(cog_list):
         await asyncio.sleep(60)
 
 
+async def monitor_impersonators():
+    await client.wait_until_ready()
+    notified_impersonators = []
+    # Make sure config is lowercase - this becomes a set, therefore unique names.
+    while not client.is_closed:
+        await ban_scammers()
+        await asyncio.sleep(30)
+
+
+def is_scammer(member):
+    # print(member.display_name.lower(), member.name.lower())
+    for badword in CONFIG["scammer_keywords"]:
+        if badword in member.display_name.lower():
+            return True
+        if badword in member.name.lower():
+            return True
+    for badhash in CONFIG["scammer_avatars"]:
+        if badhash == member.avatar:
+            return True
+    return False
+
+
+async def ban_scammers():
+    global CHECKING_BANS
+    if CHECKING_BANS:
+        # Avoid re-entrance.
+        return
+    try:
+        CHECKING_BANS = True
+        print("Checking spammers...", CONFIG["scammer_keywords"])
+        # start = time()
+        members = list(client.get_all_members())
+        for member in members:
+            if is_scammer(member):
+                print(member.display_name, member.name)
+        scammers = [member for member in members if is_scammer(member)]
+        print("{} spammers". format(len(scammers)))
+        for scammer in scammers:
+            await client.send_message(client.get_channel(CONFIG['impersonator_info_channel']), "Spammer - " + scammer.mention + " banned")
+            await client.ban(scammer)
+            print('Spammer - {} banned'.format(scammer.name))
+
+    except Exception as e:
+        print("Exception ban_scammers", str(e))
+    finally:
+        CHECKING_BANS = False
+
+
+
 if __name__ == '__main__':
     nyzo_watcher = NyzoWatcher(client)
     client.add_cog(nyzo_watcher)
     client.add_cog(Nyzo(client))
-
+    client.add_cog(Extra(client))
     client.loop.create_task(background_task([nyzo_watcher]))
 
     client.run(CONFIG['token'])

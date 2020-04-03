@@ -93,18 +93,28 @@ class NyzoWatcher:
         total_balance = 0
         for index, verifier in enumerate(verifier_list):
             char = "-"
-            if status[verifier[0]][0] >= 2:
-                char = "❌"
-            balance = balances.get(verifier[0], [None, 0])[1]
-            total_balance += balance
-            if status[verifier[0]][2] == 0:
-                icon = "🕐"
-            else:
-                icon = "✅"
-            text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
+            icon = "?"
+            if verifier[0] in status:
+                if status[verifier[0]][0] >= 2:
+                    char = "❌"
+                balance = balances.get(verifier[0], [None, 0])[1]
+                total_balance += balance
+                if status[verifier[0]][2] == 0:
+                    icon = "🕐"
+                else:
+                    icon = "✅"
+                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
                                                   str(status[verifier[0]][0]), verifier[2])
-            if status[verifier[0]][0] >= 2:
-                text = "**" + text + "**"
+                if status[verifier[0]][0] >= 2:
+                    text = "**" + text + "**"
+            else:
+                print(" Unknown ", verifier[0])
+                char = "?"
+                balance = balances.get(verifier[0], [None, 0])[1]
+                total_balance += balance
+                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
+                                                  "?", verifier[2])
+
             msg += text + "\n"
             if not (index + 1) % 20:
                 await self.bot.say(msg)

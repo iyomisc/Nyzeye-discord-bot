@@ -65,6 +65,8 @@ class WatchDb:
                             " users_info.short_id=verifiers_info.short_id and in_mesh = 0")
         queue_verifiers = self.cursor.fetchall()
         for verifier in queue_verifiers:
+            if verifier[1] not in verifiers_data:
+                continue
             if verifiers_data[verifier[1]][2] == 1:
                 member = get(bot.get_all_members(), id=verifier[0])
                 await self.safe_send_message(member, "verifier {} just joined the cycle!".format(verifier[1]), bot)
