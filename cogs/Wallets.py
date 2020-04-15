@@ -61,8 +61,8 @@ class Wallet:
     async def tip(self, ctx, user: discord.Member, amount: str='1'):
         if self.insert_transaction(str(ctx.message.author.id), str(user.id), float(amount) * 10 ** 6, "tip"):
             await self.bot.add_reaction(ctx.message, '👍')
-            await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by {} ({}) from the Nyzo discord!"
-                                         .format(float(amount), ctx.message.author, ctx.message.author.display_name))
+            await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by <@!{}> ({})!"
+                                         .format(float(amount), ctx.message.author.id, ctx.message.author.display_name))
         else:
             await self.bot.add_reaction(ctx.message, '👎')
 

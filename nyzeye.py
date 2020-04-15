@@ -33,8 +33,7 @@ async def on_ready():
     if "broadcast_restart" in CONFIG and CONFIG["broadcast_restart"]:
         await client.send_message(client.get_channel(CONFIG['bot_channel'][0]), "I just restarted, if one of your commands didn't get an answer, just resend it.")
 
-    # 625345529639075872
-    #await client.http.delete_message(CONFIG['bot_channel'][0], '625345529639075872')
+    #await client.http.delete_message(CONFIG['bot_channel'][0], 'id')
     client.loop.create_task(monitor_impersonators())
 
 
@@ -50,10 +49,8 @@ async def on_message(message):
         return
     if client.user.id != message.author.id:  # check not a bot message
         print("Got {} from {}".format(message.content, message.author.display_name))
-    if message.content.startswith('Pawer tip'):
-        await client.process_commands(message)
-        return
-    if message.server and message.channel.id not in CONFIG['bot_channel']:
+
+    if message.server and message.channel.id not in CONFIG['bot_channel'] and not message.content.startswith('Nyzeye tip'):
         print('Unauth channel')
     else:
         print("answering")
@@ -93,7 +90,7 @@ async def monitor_impersonators():
     # Make sure config is lowercase - this becomes a set, therefore unique names.
     while not client.is_closed:
         await ban_scammers()
-        await asyncio.sleep(30)
+        await asyncio.sleep(120)
 
 
 def is_scammer(member):
