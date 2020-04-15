@@ -48,6 +48,8 @@ class Wallet:
 
     @commands.command(name='tip', brief="Usage: '!tip @user amount' if not specified, amount=1, Send some nyzo to another user", pass_context=True)
     async def tip(self, ctx, user, amount=1):
+        if user[:3] == "<@!":
+            user = user[3:-1]
         if self.insert_transaction(ctx.message.author.id, user, float(amount) * 10 ** 6, "tip"):
             await self.bot.add_reaction(ctx.message, '👍')
         else:
