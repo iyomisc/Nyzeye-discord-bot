@@ -19,6 +19,12 @@ class Wallet:
         self.db.execute("CREATE TABLE IF NOT EXISTS transactions(sender TEXT, recipient TEXT, amount INT, "
                         "fee INT DEFAULT 0, type TEXT, offchain BOOL DEFAULT 1, id TEXT, timestamp INT)")
 
+    async def safe_send_message(self, recipient, message):
+        try:
+            await self.bot.send_message(recipient, message)
+        except Exception as e:
+            print(e)
+
     def insert_transaction(self, sender, recipient, amount, tx_type, offchain=True, fee=0, tx_id=None):
         if offchain:
             if amount <= 0:
@@ -55,6 +61,8 @@ class Wallet:
     async def tip(self, ctx, user: discord.Member, amount: str='1'):
         if self.insert_transaction(str(ctx.message.author.id), str(user.id), float(amount) * 10 ** 6, "tip"):
             await self.bot.add_reaction(ctx.message, '👍')
+            await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by {} ({}) from the Nyzo discord!"
+                                         .format(float(amount), ctx.message.author, ctx.message.author.display_name))
         else:
             await self.bot.add_reaction(ctx.message, '👎')
 
