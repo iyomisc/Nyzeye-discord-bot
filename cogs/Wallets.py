@@ -4,6 +4,7 @@ Nyzo specific cog
 
 from discord.ext import commands
 from modules.database import Db
+from math import floor
 import time
 import json
 import discord
@@ -59,10 +60,10 @@ class Wallet:
 
     @commands.command(name='tip', brief="Usage: '!tip @user amount' if not specified, amount=1, Send some nyzo to another user", pass_context=True)
     async def tip(self, ctx, user: discord.Member, amount: str='1'):
-        if self.insert_transaction(str(ctx.message.author.id), str(user.id), float(amount) * 10 ** 6, "tip"):
+        if self.insert_transaction(str(ctx.message.author.id), str(user.id), floor(float(amount) * 10 ** 6), "tip"):
             await self.bot.add_reaction(ctx.message, '👍')
-            await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by <@!{}> ({})!"
-                                         .format(float(amount), ctx.message.author.id, ctx.message.author.display_name))
+            await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by {} ({})!"
+                                         .format(floor(float(amount)), ctx.message.author.mention, ctx.message.author.display_name))
         else:
             await self.bot.add_reaction(ctx.message, '👎')
 
