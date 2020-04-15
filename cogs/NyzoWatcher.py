@@ -12,6 +12,7 @@ import time
 STATUS_PATH = 'api/status.json'
 LAST_NAME_UPDATE = 0
 
+
 class NyzoWatcher:
     """Nyzo verifier specific Cogs"""
 

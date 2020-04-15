@@ -7,6 +7,7 @@ from discord.ext import commands
 from cogs.NyzoWatcher import NyzoWatcher
 from cogs.Nyzo import Nyzo
 from cogs.extra import Extra
+from cogs.Wallets import Wallet
 from modules.config import CONFIG, SHORTCUTS
 
 __version__ = '0.12'
@@ -140,6 +141,7 @@ if __name__ == '__main__':
     client.add_cog(nyzo_watcher)
     client.add_cog(Nyzo(client))
     client.add_cog(Extra(client))
+    client.add_cog(Wallet(client))
     client.loop.create_task(background_task([nyzo_watcher]))
 
     client.run(CONFIG['token'])

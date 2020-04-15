@@ -52,7 +52,7 @@ class Nyzo:
         prices = "\n".join(prices)
         await self.bot.say("Nyzo price is:\n{}".format(prices))
 
-    @commands.command(name='balance', brief="Shows the balance of the given identifier", pass_context=True)
+    @commands.command(name='balanceof', brief="Shows the balance of the given identifier", pass_context=True)
     async def balance(self, ctx, id):
         balances = await self.get_all_balances()
         short_id = id[:4] + "." + id[-4:]
