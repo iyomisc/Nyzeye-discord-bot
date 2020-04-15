@@ -43,7 +43,7 @@ async def on_message(message):
     """Called when a message is created and sent to a server."""
     for search, replace in SHORTCUTS.items():
         if message.content.startswith(search):
-            message.content = message.content.replace(search, replace)
+            message.content = message.content.replace(search, replace, 1)
 
     if not message.content.startswith(BOT_PREFIX):
         print("not for me", message.content)

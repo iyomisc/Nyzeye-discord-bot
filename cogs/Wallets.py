@@ -21,6 +21,11 @@ class Wallet:
 
     def insert_transaction(self, sender, recipient, amount, tx_type, offchain=True, fee=0, tx_id=None):
         if offchain:
+            if amount <= 0:
+                return False
+
+            if sender == recipient:
+                return False
             if self.get_balance(sender) < amount + fee:
                 return False
             self.update_balance(sender, -(amount + fee))
@@ -32,8 +37,8 @@ class Wallet:
         return True
 
     def update_balance(self, user_id, value):
-        balance = self.get_balance(user_id)
-        self.db.execute("REPLACE INTO balances(user_id, balance) values(?, ?)", (user_id, balance + value))
+        balance = self.get_balance(str(user_id))
+        self.db.execute("REPLACE INTO balances(user_id, balance) values(?, ?)", (str(user_id), balance + value))
 
     def get_balance(self, user_id):
         balance = self.db.get_firsts("SELECT balance from balances WHERE user_id=?", (str(user_id),))
@@ -43,14 +48,12 @@ class Wallet:
 
     @commands.command(name='balance', brief="Shows your balance", pass_context=True)
     async def balance(self, ctx):
-        balance = self.get_balance(ctx.message.author.id)
+        balance = self.get_balance(str(ctx.message.author.id))
         await self.bot.say("You have ∩{:0.6f}".format(balance/10**6))
 
     @commands.command(name='tip', brief="Usage: '!tip @user amount' if not specified, amount=1, Send some nyzo to another user", pass_context=True)
-    async def tip(self, ctx, user, amount=1):
-        if user[:3] == "<@!":
-            user = user[3:-1]
-        if self.insert_transaction(ctx.message.author.id, user, float(amount) * 10 ** 6, "tip"):
+    async def tip(self, ctx, user: discord.Member, amount: str='1'):
+        if self.insert_transaction(str(ctx.message.author.id), str(user.id), float(amount) * 10 ** 6, "tip"):
             await self.bot.add_reaction(ctx.message, '👍')
         else:
             await self.bot.add_reaction(ctx.message, '👎')
