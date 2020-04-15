@@ -67,4 +67,12 @@ class Wallet:
         else:
             await self.bot.add_reaction(ctx.message, '👎')
 
+    @commands.command(name='id', brief="Gives the discord long id of a user, or yourself if not given", pass_context=True)
+    async def id(self, ctx, user: discord.Member=None):
+        if not user:
+            await self.bot.say("Your id is: `{}`".format(ctx.message.author.id))
+        else:
+            await self.bot.say("Id of {} is: `{}`".format(user.mention, user.id))
+
+
 
