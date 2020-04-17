@@ -4,12 +4,19 @@ Nyzo specific cog
 
 from discord.ext import commands
 from modules.database import Db
-from math import floor
+from math import floor, ceil
+from nyzostrings.nyzostringprefilleddata import NyzoStringPrefilledData
+from nyzostrings.nyzostringencoder import NyzoStringEncoder
+from modules.helpers import async_get
+from modules.config import CONFIG
 import time
 import json
 import discord
 
+
 DB_PATH = 'data/wallets.db'
+MAIN_ADDRESS = "b34b3320b0291be2cd063f049bdef05ba57f313a60c173c3abce4b770e4e10b5"
+MAIN_ID = "id__8bdbcQ2NahMzRgp_19Mv-5LCwR4Ypc5RNYMeiVtejy2TGnPC3AqE"
 
 
 class Wallet:
@@ -37,11 +44,19 @@ class Wallet:
                 return False
             self.update_balance(sender, -(amount + fee))
             self.update_balance(recipient, amount)
+        elif tx_type == "deposit":
+            self.update_balance(recipient, amount)
 
         self.db.execute("INSERT INTO transactions(sender, recipient, amount, fee, type, offchain, id, timestamp) "
                         "values(?,?,?,?,?,?,?,?)",
                         (str(sender), str(recipient), amount, fee, tx_type, offchain, tx_id, int(time.time())))
         return True
+
+    def deposit_transaction(self, amount, discord_id, signature, sender):
+        if len(self.db.get_firsts("SELECT id FROM transactions WHERE id=?", (signature, ))):
+            return False
+
+        return self.insert_transaction(sender, discord_id, amount, "deposit", offchain=False, tx_id=signature)
 
     def update_balance(self, user_id, value):
         balance = self.get_balance(str(user_id))
@@ -67,12 +82,22 @@ class Wallet:
         else:
             await self.bot.add_reaction(ctx.message, '👎')
 
-    @commands.command(name='id', brief="Gives the discord long id of a user, or yourself if not given", pass_context=True)
-    async def id(self, ctx, user: discord.Member=None):
-        if not user:
-            await self.bot.say("Your id is: `{}`".format(ctx.message.author.id))
+    @commands.command(name='deposit', brief="Used to deposit Nyzo on you account", pass_context=True)
+    async def deposit(self, ctx, block_id: int=-1):
+        if block_id != -1:
+            count = 0
+            successed = 0
+            result = await async_get("{}/block/{}".format(CONFIG["api_url"], block_id), is_json=True)
+            for block in result:
+                for transaction in block["value"]["transactions"]:
+                    if transaction["value"]["receiver_identifier"] == MAIN_ADDRESS and transaction["value"]["sender_data"]:
+                        count += 1
+                        if self.deposit_transaction(transaction["value"]["amount"] - ceil(transaction["value"]["amount"] * 0.0025), bytes.fromhex(transaction["value"]["sender_data"]).decode("utf-8"), transaction["value"]["signature"], transaction["value"]["sender_identifier"]):
+                            successed += 1
+            await self.bot.say("{} deposit transactions found in block {}\nSuccessfuly processed {}".format(count, block_id, successed))
         else:
-            await self.bot.say("Id of {} is: `{}`".format(user.mention, user.id))
+            nyzostring = NyzoStringEncoder.encode(NyzoStringPrefilledData.from_hex(MAIN_ADDRESS, str(ctx.message.author.id).encode().hex()))
+            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`".format(MAIN_ID, ctx.message.author.id, nyzostring))
 
 
 
