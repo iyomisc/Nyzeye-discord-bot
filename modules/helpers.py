@@ -5,7 +5,7 @@ from datetime import datetime
 
 import aiohttp
 from discord.ext import commands
-
+from json import loads as json_loads
 
 def ts_to_string(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
@@ -25,7 +25,7 @@ async def async_get(url, is_json=False):
     # async with aiohttp.ClientSession() as session:
     async with HTTP_SESSION.get(url) as resp:
         if is_json:
-            return await resp.json()
+            return json_loads(await resp.text())
         else:
             return await resp.text()
 

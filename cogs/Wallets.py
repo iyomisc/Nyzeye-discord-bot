@@ -97,7 +97,7 @@ class Wallet:
             await self.bot.say("{} deposit transactions found in block {}\nSuccessfuly processed {}".format(count, block_id, successed))
         else:
             nyzostring = NyzoStringEncoder.encode(NyzoStringPrefilledData.from_hex(MAIN_ADDRESS, str(ctx.message.author.id).encode().hex()))
-            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`".format(MAIN_ID, ctx.message.author.id, nyzostring))
+            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\n Then type `!deposit block_height` with the block height of the block containing your transaction".format(MAIN_ID, ctx.message.author.id, nyzostring))
 
 
 
