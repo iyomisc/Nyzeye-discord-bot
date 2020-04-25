@@ -83,6 +83,9 @@ class NyzoWatcher:
     @commands.command(name='list', brief="shows your watch list", pass_context=True)
     async def list(self, ctx, param=""):
         """print the current list"""
+        if str(ctx.message.channel.type) != "private":
+            await self.bot.say("You can only see your watch list in private chat with me.")
+            return
         status = await self.status()
         verifier_list = self.bot.watch_module.get_list(ctx.message.author.id, param=param)
         balances = await self.bot.cogs["Nyzo"].get_all_balances()
