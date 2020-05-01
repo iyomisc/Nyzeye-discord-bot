@@ -135,10 +135,11 @@ async def ban_scammers():
 
 if __name__ == '__main__':
     nyzo_watcher = NyzoWatcher(client)
+    wallet = Wallet(client)
     client.add_cog(nyzo_watcher)
     client.add_cog(Nyzo(client))
     client.add_cog(Extra(client))
-    client.add_cog(Wallet(client))
-    client.loop.create_task(background_task([nyzo_watcher]))
+    client.add_cog(wallet)
+    client.loop.create_task(background_task([nyzo_watcher, wallet]))
 
     client.run(CONFIG['token'])

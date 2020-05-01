@@ -15,7 +15,7 @@ try:
 except:
     pass
 
-url = "https://nyzo.co/meshUpdate?s=0"
+url = "https://nyzo.co/cycleUpdate"
 queue_url = "https://nyzo.co/queueUpdate/20000"
 balance_url = "https://www.nyzo.co/balanceListPlain/{}"
 start_time = time.time()

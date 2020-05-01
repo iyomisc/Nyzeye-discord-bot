@@ -17,7 +17,7 @@ import discord
 DB_PATH = 'data/wallets.db'
 MAIN_ADDRESS = "b34b3320b0291be2cd063f049bdef05ba57f313a60c173c3abce4b770e4e10b5"
 MAIN_ID = "id__8bdbcQ2NahMzRgp_19Mv-5LCwR4Ypc5RNYMeiVtejy2TGnPC3AqE"
-
+LAST_HEIGHT_FILE = "data/last_height.txt"
 
 class Wallet:
     def __init__(self, bot):
@@ -97,7 +97,28 @@ class Wallet:
             await self.bot.say("{} deposit transactions found in block {}\nSuccessfuly processed {}".format(count, block_id, successed))
         else:
             nyzostring = NyzoStringEncoder.encode(NyzoStringPrefilledData.from_hex(MAIN_ADDRESS, str(ctx.message.author.id).encode().hex()))
-            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\n Then type `!deposit block_height` with the block height of the block containing your transaction".format(MAIN_ID, ctx.message.author.id, nyzostring))
+            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\nYour balance will be updated a minute later.".format(MAIN_ID, ctx.message.author.id, nyzostring))
 
+    async def background_task(self):
+
+        try:
+            with open(LAST_HEIGHT_FILE) as f:
+                previous_height = int(f.read())
+        except:
+            previous_height = 0
+
+        count = 0
+        succeeded = 0
+        result = await async_get("{}/tx_since_to/{}/{}".format(CONFIG["api_url"], previous_height, MAIN_ADDRESS), is_json=True)
+        new_height = result["end_height"]
+        for transaction in result["txs"]:
+            if transaction["recipient"] == MAIN_ADDRESS and transaction["data"]:
+                count += 1
+                if self.deposit_transaction(transaction["amount_after_fees"], transaction["data"], transaction["signature"], transaction["sender"]):
+                    succeeded += 1
+        print("{} deposit transactions found from {} to {}\nSuccessfully processed {}".format(count, previous_height, new_height, succeeded))
+
+        with open(LAST_HEIGHT_FILE, "w") as f:
+            f.write(str(new_height))
 
 
