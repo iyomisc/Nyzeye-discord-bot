@@ -97,10 +97,9 @@ class Wallet:
             await self.bot.say("{} deposit transactions found in block {}\nSuccessfuly processed {}".format(count, block_id, successed))
         else:
             nyzostring = NyzoStringEncoder.encode(NyzoStringPrefilledData.from_hex(MAIN_ADDRESS, str(ctx.message.author.id).encode().hex()))
-            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\nYour balance will be updated a minute later.".format(MAIN_ID, ctx.message.author.id, nyzostring))
+            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\nYou will get a message when the deposit is validated.".format(MAIN_ID, ctx.message.author.id, nyzostring))
 
     async def background_task(self):
-
         try:
             with open(LAST_HEIGHT_FILE) as f:
                 previous_height = int(f.read())
@@ -116,6 +115,10 @@ class Wallet:
                 count += 1
                 if self.deposit_transaction(transaction["amount_after_fees"], transaction["data"], transaction["signature"], transaction["sender"]):
                     succeeded += 1
+                    try:
+                        await self.safe_send_message(await self.bot.get_user_info(user_id=transaction["data"]), "∩{:0.6f} have been deposited on your account!".format(transaction["amount_after_fees"]/(10**6)))
+                    except Exception as e:
+                        print("Could not send message", e)
         print("{} deposit transactions found from {} to {}\nSuccessfully processed {}".format(count, previous_height, new_height, succeeded))
 
         with open(LAST_HEIGHT_FILE, "w") as f:
