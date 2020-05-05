@@ -97,7 +97,7 @@ class Wallet:
             await self.bot.say("{} deposit transactions found in block {}\nSuccessfuly processed {}".format(count, block_id, successed))
         else:
             nyzostring = NyzoStringEncoder.encode(NyzoStringPrefilledData.from_hex(MAIN_ADDRESS, str(ctx.message.author.id).encode().hex()))
-            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\nYou will get a message when the deposit is validated.".format(MAIN_ID, ctx.message.author.id, nyzostring))
+            await self.bot.say("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\nOr use this nyzostring: `{}`\nYou will get a message once the deposit is validated.".format(MAIN_ID, ctx.message.author.id, nyzostring))
 
     async def background_task(self):
         try:

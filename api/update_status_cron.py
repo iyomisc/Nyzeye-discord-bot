@@ -2,6 +2,7 @@ import json
 import urllib.request
 import psutil
 from os import getpid
+import os.path
 import sys
 
 import time
@@ -15,7 +16,7 @@ try:
 except:
     pass
 
-url = "https://nyzo.co/cycleUpdate"
+url = "https://relay0.nyzo.co/cycleUpdate"
 queue_url = "https://nyzo.co/queueUpdate/20000"
 balance_url = "https://www.nyzo.co/balanceListPlain/{}"
 start_time = time.time()
