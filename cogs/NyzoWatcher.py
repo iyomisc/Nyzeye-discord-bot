@@ -5,43 +5,46 @@ NyzoWatcher cogs
 import json
 import os
 import sys
-import discord
 from discord.ext import commands
 from modules.WatchDB import WatchDb
 import time
+
 STATUS_PATH = 'api/status.json'
 LAST_NAME_UPDATE = 0
 
 
-class NyzoWatcher:
-    """Nyzo verifier specific Cogs"""
+class NyzoWatcher(commands.Cog):
+    """Nyzo verifier specific Commands"""
 
-    def __init__(self, bot):
+    def __init__(self):
         os.makedirs("data", exist_ok=True)
-        self.bot = bot
-        self.bot.watch_module = WatchDb()
+        self.watch_module = WatchDb()
 
-    async def status(self):
+    @staticmethod
+    async def status():
         """live status"""
         with open(STATUS_PATH, 'r') as f:
             return json.load(f)
 
-    @commands.command(name='watch', brief="Add a verifier to the watch list and warn via PM when down",
-                      pass_context=True)
+    @staticmethod
+    def fill(text, final_length, char=" "):
+        return text + char * (final_length - len(text))
+
+    @commands.command()
     async def watch(self, ctx, *verifiers):
-        """Adds a verifier to watch"""
+        """Adds a verifier to the watch list and warn via PM when down"""
         try:
             status = await self.status()
-            await self.bot.say("Verifiers:")
+            await ctx.send("Verifiers:")
             for verifier in verifiers:
                 if verifier:
                     verifier = verifier[:4] + "." + verifier[-4:]
                     if verifier not in status:
                         msg = "No known Verifier with id {}\n".format(verifier)
                     else:
-                        self.bot.watch_module.watch(ctx.message.author.id, verifier, status)
+                        self.watch_module.watch(ctx.message.author.id, verifier, status)
                         msg = "Added {}\n".format(verifier)
-                    await self.bot.say(msg)
+                    await ctx.send(msg)
 
         except Exception as e:
             print(e)
@@ -49,16 +52,15 @@ class NyzoWatcher:
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
 
-    @commands.command(name='recover', brief="Allows to recover your watch list with the nyzeye list",
-                      pass_context=True)
+    @commands.command()
     async def recover(self, ctx, *verifiers):
-        """recovers the watch list"""
+        """Allows to recover your watch list with the nyzeye list"""
         to_watch = []
         try:
             for verifier in verifiers:
                 if len(verifier) == 9 and verifier[4] == ".":
                     to_watch.append(verifier)
-            await self.watch.callback(self, ctx, *to_watch)
+            await self.watch(ctx, *to_watch)
 
         except Exception as e:
             print(e)
@@ -66,29 +68,27 @@ class NyzoWatcher:
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print(exc_type, fname, exc_tb.tb_lineno)
 
-    @commands.command(name='unwatch', brief="Removes an verifier from the watch list", pass_context=True)
+    @commands.command()
     async def unwatch(self, ctx, *verifiers):
-        """Removes an verifier from the watch list"""
-        await self.bot.say("Verifiers:")
+        """Removes a verifier from the watch list"""
+        await ctx.send("Verifiers:")
         for verifier in verifiers:
             if verifier:
                 verifier = verifier[:4] + "." + verifier[-4:]
-                self.bot.watch_module.unwatch(ctx.message.author.id, verifier)
+                self.watch_module.unwatch(ctx.author.id, verifier)
                 msg = "Removed {}\n".format(verifier)
-                await self.bot.say(msg)
+                await ctx.send(msg)
 
-    def fill(self, text, final_length, char=" "):
-        return text + char * (final_length - len(text))
-
-    @commands.command(name='list', brief="shows your watch list", pass_context=True)
+    @commands.command()
     async def list(self, ctx, param=""):
-        """print the current list"""
-        if str(ctx.message.channel.type) != "private":
-            await self.bot.say("You can only see your watch list in private chat with me.")
+        """shows your watch list"""
+        if ctx.guild is not None:
+            await ctx.send("You can only see your watch list in private chat with me.")
             return
+
         status = await self.status()
-        verifier_list = self.bot.watch_module.get_list(ctx.message.author.id, param=param)
-        balances = await self.bot.cogs["Nyzo"].get_all_balances()
+        verifier_list = self.watch_module.get_list(ctx.author.id, param=param)
+        balances = await ctx.bot.cogs["Nyzo"].get_all_balances()
 
         msg = "You are watching {} {} verifier".format(len(verifier_list), param)
         if len(verifier_list) != 1:
@@ -107,8 +107,9 @@ class NyzoWatcher:
                     icon = "🕐"
                 else:
                     icon = "✅"
-                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
-                                                  str(status[verifier[0]][0]), verifier[2])
+                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon,
+                                                      self.fill(str(balance), 15),
+                                                      str(status[verifier[0]][0]), verifier[2])
                 if status[verifier[0]][0] >= 2:
                     text = "**" + text + "**"
             else:
@@ -116,19 +117,19 @@ class NyzoWatcher:
                 char = "?"
                 balance = balances.get(verifier[0], [None, 0])[1]
                 total_balance += balance
-                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon, self.fill(str(balance), 15),
-                                                  "?", verifier[2])
+                text = "`{} {}{} ∩{} {} | {}`".format(char, self.fill(verifier[0], 10), icon,
+                                                      self.fill(str(balance), 15), "?", verifier[2])
 
             msg += text + "\n"
             if not (index + 1) % 20:
-                await self.bot.say(msg)
+                await ctx.send(msg)
                 msg = ""
         msg += "Total balance: ∩{:0.2f}".format(total_balance)
-        await self.bot.say(msg)
+        await ctx.send(msg)
 
-    async def background_task(self):
+    async def background_task(self, bot=None):
         status = await self.status()
-        await self.bot.watch_module.update_verifiers_status(status, self.bot)
-        await self.bot.watch_module.get_verifiers_status(self.bot)
+        await self.watch_module.update_verifiers_status(status, bot)
+        await self.watch_module.get_verifiers_status(bot)
         if time.time() > LAST_NAME_UPDATE + 3600:
-            await self.bot.watch_module.update_nickname(status)
+            await self.watch_module.update_nickname(status)

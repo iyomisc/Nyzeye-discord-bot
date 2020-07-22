@@ -2,13 +2,18 @@ import sqlite3
 import time
 import os
 from discord.utils import get
+
 SUCCESSIVE_FAILS = 10
 
 
 class WatchDb:
-    async def safe_send_message(self, recipient, message, bot):
+    @staticmethod
+    async def safe_send_message(recipient, message):
         try:
-            await bot.send_message(recipient, message)
+            if not recipient.dm_channel:
+                await recipient.create_dm()
+
+            await recipient.dm_channel.send(message)
         except Exception as e:
             print(e)
 
@@ -32,13 +37,13 @@ class WatchDb:
         self.db.close()
 
     def watch(self, user_id, short_id, verifiers_info):
-        self.cursor.execute("INSERT into users_info values(?,?)", (user_id, short_id))
+        self.cursor.execute("INSERT into users_info values(?,?)", (str(user_id), short_id))
         self.cursor.execute("INSERT OR IGNORE into verifiers_info values(?,?,?,?,?)",
                             (short_id, verifiers_info[short_id][1], 0, int(time.time()), verifiers_info[short_id][2]))
         self.db.commit()
 
     def unwatch(self, user_id, short_id):
-        self.cursor.execute("DELETE FROM users_info where user_id=? and short_id=?", (user_id, short_id))
+        self.cursor.execute("DELETE FROM users_info where user_id=? and short_id=?", (str(user_id), short_id))
         self.db.commit()
 
     async def update_verifiers_status(self, verifiers_data, bot):
@@ -68,8 +73,8 @@ class WatchDb:
             if verifier[1] not in verifiers_data:
                 continue
             if verifiers_data[verifier[1]][2] == 1:
-                member = get(bot.get_all_members(), id=verifier[0])
-                await self.safe_send_message(member, "verifier {} just joined the cycle!".format(verifier[1]), bot)
+                member = get(bot.get_all_members(), id=int(verifier[0]))
+                await self.safe_send_message(member, "verifier {} just joined the cycle!".format(verifier[1]))
 
         self.cursor.execute("SELECT distinct(short_id) FROM users_info")
         short_ids = self.cursor.fetchall()
@@ -93,12 +98,12 @@ class WatchDb:
     async def get_verifiers_status(self, bot):
         self.cursor.execute("select user_id, users_info.short_id, nickname from users_info join verifiers_info where"
                             " users_info.short_id=verifiers_info.short_id and status=?",
-                            (int("1"*(SUCCESSIVE_FAILS)+"0"),))
+                            (int("1" * SUCCESSIVE_FAILS + "0"), ))
         stopped_verifiers = self.cursor.fetchall()
         for verifier in stopped_verifiers:
-            member = get(bot.get_all_members(), id=verifier[0])
+            member = get(bot.get_all_members(), id=int(verifier[0]))
             await self.safe_send_message(member, "verifier {} ({}) just stopped, you should check what happened"
-                                         .format(verifier[1], verifier[2]).replace(" () ", ""), bot)
+                                         .format(verifier[1], verifier[2]).replace(" () ", ""))
 
     def get_list(self, user_id, param=""):
         query = "SELECT users_info.short_id, status, nickname FROM users_info join verifiers_info WHERE " \
@@ -107,7 +112,7 @@ class WatchDb:
             query += " and in_mesh = 0"
         elif param == "cycle":
             query += " and in_mesh = 1"
-        self.cursor.execute(query, (user_id,))
+        self.cursor.execute(query, (str(user_id),))
         return self.cursor.fetchall()
 
     async def update_nickname(self, verifiers_data):
@@ -116,5 +121,6 @@ class WatchDb:
             if verifier[0] in verifiers_data:
                 nickname = verifiers_data[verifier[0]][2]
                 if nickname != verifier[1]:
-                    self.cursor.execute("update verifiers_info set nickname=? where short_id=?", (nickname, verifier[0]))
+                    self.cursor.execute("update verifiers_info set nickname=? where short_id=?",
+                                        (nickname, verifier[0]))
         self.db.commit()

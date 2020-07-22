@@ -6,14 +6,14 @@ from discord.ext import commands
 from modules.helpers import async_get
 import time
 import json
-import discord
 
 BALANCES_PATH = 'api/balances.json'
+MARKETS = ["citex", "qtrade", "bihodl", "qbtc", "bilaxy", "hotbit"]  # Markets we want to list
 
 
-class Nyzo:
-    def __init__(self, bot):
-        self.bot = bot
+class Nyzo(commands.Cog):
+    """Basic nyzo commands"""
+    def __init__(self):
         self.balances = {}
         self.last_update = 0
 
@@ -24,9 +24,10 @@ class Nyzo:
             self.last_update = time.time()
         return self.balances
 
-    @commands.command(name='price', brief="Shows Nyzo price", pass_context=True)
+    @commands.command()
     async def price(self, ctx):
-        MARKETS = ["citex", "qtrade", "bihodl", "qbtc", "bilaxy", "hotbit"]  # Markets we want to list
+        """Shows Nyzo price"""
+
         url = "https://api.coingecko.com/api/v3/coins/nyzo/tickers"
         api = await async_get(url, is_json=True)
         sorted_api = sorted(api["tickers"], key=lambda ticker: ticker["market"]["identifier"] + " " + ticker["target"])
@@ -50,19 +51,20 @@ class Nyzo:
                         "▸ {:0.8f} CNYT or {:0.3f} USD on {}".format(market["last"], market["converted_last"]["usd"],
                                                                      market["market"]["name"]))
         prices = "\n".join(prices)
-        await self.bot.say("Nyzo price is:\n{}".format(prices))
+        await ctx.send("Nyzo price is:\n{}".format(prices))
 
-    @commands.command(name='balanceof', brief="Shows the balance of the given identifier", pass_context=True)
-    async def balance(self, ctx, id):
+    @commands.command()
+    async def balanceof(self, ctx, verifier_id):
+        """Shows the balance of the given identifier"""
         balances = await self.get_all_balances()
-        short_id = id[:4] + "." + id[-4:]
+        short_id = verifier_id[:4] + "." + verifier_id[-4:]
         if short_id in balances:
-            message = "Balance of {}:\n∩".format(id)
+            message = "Balance of {}:\n∩".format(verifier_id)
             message += str(balances[short_id][1])
         else:
-            message = "No such id: {}".format(id)
+            message = "No such id: {}".format(verifier_id)
 
-        await self.bot.say(message)
+        await ctx.send(message)
 
         """
         if short_id in balances:

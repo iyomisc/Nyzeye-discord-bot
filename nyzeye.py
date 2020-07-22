@@ -4,21 +4,23 @@ Nyzeye Discord Bot for Nyzo Cryptocurrency
 
 import asyncio
 from discord.ext import commands
+import discord
 from cogs.NyzoWatcher import NyzoWatcher
 from cogs.Nyzo import Nyzo
 from cogs.extra import Extra
 from cogs.Wallets import Wallet
 from modules.config import CONFIG, SHORTCUTS
 
-__version__ = '0.12'
+__version__ = '1.0'
 
 BOT_PREFIX = 'Nyzeye '
 
-client = commands.Bot(command_prefix=BOT_PREFIX)
+bot = commands.Bot(command_prefix=BOT_PREFIX)
 
 CHECKING_BANS = False
 
-@client.event
+
+@bot.event
 async def on_ready():
     """
     This function is not guaranteed to be the first event called.
@@ -26,18 +28,18 @@ async def on_ready():
     This library implements reconnection logic and thus will end up calling this event whenever a RESUME request fails.
     """
     print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
+    print(bot.user.name)
+    print(bot.user.id)
     print('------')
 
     if "broadcast_restart" in CONFIG and CONFIG["broadcast_restart"]:
-        await client.send_message(client.get_channel(CONFIG['bot_channel'][0]), "I just restarted, if one of your commands didn't get an answer, just resend it.")
+        await bot.get_channel(CONFIG['bot_channel'][0])\
+            .send("I just restarted, if one of your commands didn't get an answer, just resend it.")
 
-    #await client.http.delete_message(CONFIG['bot_channel'][0], 'id')
-    client.loop.create_task(monitor_impersonators())
+    bot.loop.create_task(monitor_impersonators())
 
 
-@client.event
+@bot.event
 async def on_message(message):
     """Called when a message is created and sent to a server."""
     for search, replace in SHORTCUTS.items():
@@ -45,56 +47,58 @@ async def on_message(message):
             message.content = message.content.replace(search, replace, 1)
 
     if not message.content.startswith(BOT_PREFIX):
-        print("not for me", message.content)
         return
-    if client.user.id != message.author.id:  # check not a bot message
-        print("Got {} from {}".format(message.content, message.author.display_name))
 
-    if message.server and message.channel.id not in CONFIG['bot_channel'] and not message.content.startswith('Nyzeye tip'):
+    if bot.user.id != message.author.id:  # check not a bot message
+        print("Got {} from {}".format(message.content, message.author.display_name))
+    else:
+        return
+
+    if type(message.channel) == discord.TextChannel and message.channel.id not in CONFIG['bot_channel'] \
+            and not message.content.startswith('Nyzeye tip'):
         print('Unauth channel')
     else:
         print("answering")
-        await client.add_reaction(message, '⏳')  # Hourglass
+        await message.add_reaction('⏳')  # Hourglass
         try:
             # only here, will process commands
-            await client.process_commands(message)
+            await bot.process_commands(message)
             print("Success")
         except Exception as e:
             print(e)
 
         finally:
 
-            await client.remove_reaction(message, '⏳', client.user)  # Hourglass
+            await message.remove_reaction('⏳', bot.user)  # Hourglass
 
 
-@client.command(name='about', brief="Nyzeye bot general info", pass_context=True)
+@bot.command()
 async def about(ctx):
-    await client.say(
+    """Nyzeye bot general info"""
+    await ctx.send(
         "Nyzeye bot Version {}\nI'm your Nyzo butler. Type `Nyzeye help` for a full commands list.".format(__version__))
 
 
 async def background_task(cog_list):
-    await client.wait_until_ready()
-    while not client.is_closed:
+    await bot.wait_until_ready()
+    while not bot.is_closed:
         for cog in cog_list:
             try:
-                await cog.background_task()
+                await cog.background_task(bot=bot)
             except Exception as e:
                 print(e)
         await asyncio.sleep(60)
 
 
 async def monitor_impersonators():
-    await client.wait_until_ready()
-    notified_impersonators = []
+    await bot.wait_until_ready()
     # Make sure config is lowercase - this becomes a set, therefore unique names.
-    while not client.is_closed:
+    while not bot.is_closed:
         await ban_scammers()
         await asyncio.sleep(120)
 
 
 def is_scammer(member):
-    # print(member.display_name.lower(), member.name.lower())
     for badword in CONFIG["scammer_keywords"]:
         if badword in member.display_name.lower():
             return True
@@ -115,15 +119,16 @@ async def ban_scammers():
         CHECKING_BANS = True
         print("Checking spammers...", CONFIG["scammer_keywords"])
         # start = time()
-        members = list(client.get_all_members())
+        members = list(bot.get_all_members())
         for member in members:
             if is_scammer(member):
                 print(member.display_name, member.name)
         scammers = [member for member in members if is_scammer(member)]
         print("{} spammers". format(len(scammers)))
         for scammer in scammers:
-            await client.send_message(client.get_channel(CONFIG['impersonator_info_channel']), "Spammer - " + scammer.mention + " banned")
-            await client.ban(scammer)
+            await bot.get_channel(CONFIG['impersonator_info_channel']).send("Spammer - " + scammer.mention + " banned")
+            await scammer.ban()
+
             print('Spammer - {} banned'.format(scammer.name))
 
     except Exception as e:
@@ -132,14 +137,13 @@ async def ban_scammers():
         CHECKING_BANS = False
 
 
-
 if __name__ == '__main__':
-    nyzo_watcher = NyzoWatcher(client)
-    wallet = Wallet(client)
-    client.add_cog(nyzo_watcher)
-    client.add_cog(Nyzo(client))
-    client.add_cog(Extra(client))
-    client.add_cog(wallet)
-    client.loop.create_task(background_task([nyzo_watcher, wallet]))
+    nyzo_watcher = NyzoWatcher()
+    wallet = Wallet()
+    bot.add_cog(nyzo_watcher)
+    bot.add_cog(Nyzo())
+    bot.add_cog(Extra())
+    bot.add_cog(wallet)
+    bot.loop.create_task(background_task([nyzo_watcher, wallet]))
 
-    client.run(CONFIG['token'])
+    bot.run(CONFIG['token'])
