@@ -5,6 +5,7 @@ Nyzeye Discord Bot for Nyzo Cryptocurrency
 import asyncio
 from discord.ext import commands
 import discord
+from discord.ext.tasks import loop
 from cogs.NyzoWatcher import NyzoWatcher
 from cogs.Nyzo import Nyzo
 from cogs.extra import Extra
@@ -15,7 +16,11 @@ __version__ = '1.0'
 
 BOT_PREFIX = 'Nyzeye '
 
-bot = commands.Bot(command_prefix=BOT_PREFIX)
+intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
+
+bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
 
 CHECKING_BANS = False
 
@@ -79,15 +84,13 @@ async def about(ctx):
         "Nyzeye bot Version {}\nI'm your Nyzo butler. Type `Nyzeye help` for a full commands list.".format(__version__))
 
 
-async def background_task(cog_list):
-    await bot.wait_until_ready()
-    while not bot.is_closed:
-        for cog in cog_list:
-            try:
-                await cog.background_task(bot=bot)
-            except Exception as e:
-                print(e)
-        await asyncio.sleep(60)
+@loop(seconds=60)
+async def background_task():
+    for cog in cog_list:
+        try:
+            await cog.background_task(bot=bot)
+        except Exception as e:
+            print(e)
 
 
 async def monitor_impersonators():
@@ -144,6 +147,7 @@ if __name__ == '__main__':
     bot.add_cog(Nyzo())
     bot.add_cog(Extra())
     bot.add_cog(wallet)
-    bot.loop.create_task(background_task([nyzo_watcher, wallet]))
 
+    cog_list = [nyzo_watcher, wallet]
+    background_task.start()
     bot.run(CONFIG['token'])
