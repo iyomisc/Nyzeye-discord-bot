@@ -4,11 +4,13 @@ Nyzo wallets specific cog
 
 from discord.ext import commands
 from modules.database import Db
+from random import randint
 from math import floor, ceil
 from nyzostrings.nyzostringprefilleddata import NyzoStringPrefilledData
 from nyzostrings.nyzostringencoder import NyzoStringEncoder
 from modules.helpers import async_get
 from modules.config import CONFIG
+from pynyzo.clienthelpers import NyzoClient
 import time
 import discord
 
@@ -17,6 +19,9 @@ DB_PATH = 'data/wallets.db'
 MAIN_ADDRESS = "b34b3320b0291be2cd063f049bdef05ba57f313a60c173c3abce4b770e4e10b5"
 MAIN_ID = "id__8bdbcQ2NahMzRgp_19Mv-5LCwR4Ypc5RNYMeiVtejy2TGnPC3AqE"
 LAST_HEIGHT_FILE = "data/last_height.txt"
+NYZO_CLIENT = NyzoClient()
+with open("private/wallet_key.txt") as f:
+    PRIVATE_KEY = f.read()
 
 
 class Wallet(commands.Cog):
@@ -37,6 +42,19 @@ class Wallet(commands.Cog):
         except Exception as e:
             print(e)
 
+    def remove_transaction(self, tx_id):
+        for sender, recipient, amount, type, timestamp in \
+                self.db.get("SELECT sender, recipient, amount, type, timestamp FROM transactions WHERE id=?", (tx_id,)):
+
+            if type == "withdraw":
+                self.update_balance(sender, amount)
+                self.db.execute(
+                    "DELETE FROM transactions WHERE sender=? AND recipient=? AND amount=? AND type=? AND timestamp=?",
+                    (sender, recipient, amount, type, timestamp))
+                print("removed transaction {}, {}, {}, {}, {}".format(sender, recipient, amount, type, timestamp))
+            else:
+                print("did not remove transaction {}, {}, {}, {}, {}".format(sender, recipient, amount, type, timestamp))
+
     def insert_transaction(self, sender, recipient, amount, tx_type, offchain=True, fee=0, tx_id=None):
         if offchain:
             if amount <= 0:
@@ -50,6 +68,9 @@ class Wallet(commands.Cog):
             self.update_balance(recipient, amount)
         elif tx_type == "deposit":
             self.update_balance(recipient, amount)
+
+        elif tx_type == "withdraw":
+            self.update_balance(sender, -amount)
 
         self.db.execute("INSERT INTO transactions(sender, recipient, amount, fee, type, offchain, id, timestamp) "
                         "values(?,?,?,?,?,?,?,?)",
@@ -114,6 +135,54 @@ class Wallet(commands.Cog):
             await ctx.send("To deposit nyzo on your account, send a transaction to `{}` with `{}` in the data field\n"
                            "Or use this nyzostring: `{}`\nYou will get a message once the deposit is validated."
                            .format(MAIN_ID, ctx.author.id, nyzostring))
+
+    @commands.command()
+    async def withdraw(self, ctx, recipient: str, amount: float):
+        """Used to withdraw Nyzo to another address"""
+        if amount <= 0:
+            await ctx.send("You can't send negative or null amounts")
+            return
+
+        if amount * (10 ** 6) - int(amount * (10 ** 6)) != 0:
+            await ctx.send("You can't send more than 6 decimals")
+            return
+
+        try:
+            nyzo_string, recipient = NYZO_CLIENT.normalize_address(recipient, as_hex=True)
+        except ValueError:
+            await ctx.send("Wrong address format. 64 bytes as hex or id_ nyzostring required")
+            return
+
+        if self.get_balance(ctx.author.id) < amount * (10 ** 6):
+            await ctx.send("You don't have enough nyzo :(")
+            return
+
+        unique_id = str(randint(10 ** 20, 10 ** 30))
+        self.insert_transaction(ctx.author.id, recipient, int(amount * (10 ** 6)), "withdraw", offchain=False, tx_id=unique_id)
+        await ctx.send("Transaction will be forwarded to the cycle with message {}, you will get a new message when "
+                       "the transaction is validated".format(unique_id))
+        try:
+            result = await NYZO_CLIENT.async_safe_send(recipient, amount=amount, data=unique_id, key_=PRIVATE_KEY, max_tries=5, verbose=True)
+        except Exception as e:
+            print(e)
+            await ctx.send("Something went wrong while sending transaction {}, please contact @iyomisc".format(unique_id))
+            return
+
+        if result["sent"] is True:
+            await ctx.send("Transaction {} successfully passed in block {}".format(unique_id, result["height"]))
+            self.db.execute("UPDATE transactions SET fee=? WHERE id=?", (result["height"], unique_id))
+        else:
+            if not result["error"]:
+                await ctx.send("transaction {} has not been accepted by the cycle:\nnotice: {}".format(
+                    unique_id, result["notice"]))
+            else:
+                if result["notice"]:
+                    await ctx.send("transaction {} has not been forwarded to the cycle\nerror: {}\nnotice: {}".format(
+                        unique_id, result["error"], result["notice"]))
+                else:
+                    await ctx.send("transaction {} has not been forwarded to the cycle\nerror: {}".format(
+                        unique_id, result["error"]))
+            self.remove_transaction(unique_id)
 
     async def background_task(self, bot=None):
         try:
