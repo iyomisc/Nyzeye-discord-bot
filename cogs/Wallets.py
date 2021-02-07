@@ -21,7 +21,7 @@ MAIN_ID = "id__8bdbcQ2NahMzRgp_19Mv-5LCwR4Ypc5RNYMeiVtejy2TGnPC3AqE"
 LAST_HEIGHT_FILE = "data/last_height.txt"
 NYZO_CLIENT = NyzoClient()
 with open("private/wallet_key.txt") as f:
-    PRIVATE_KEY = f.read()
+    PRIVATE_KEY = f.read().strip()
 
 
 class Wallet(commands.Cog):
