@@ -159,7 +159,7 @@ class Wallet(commands.Cog):
 
         unique_id = str(randint(10 ** 20, 10 ** 30))
         self.insert_transaction(ctx.author.id, recipient, int(amount * (10 ** 6)), "withdraw", offchain=False, tx_id=unique_id)
-        await ctx.send("Transaction will be forwarded to the cycle with message {}, you will get a new message when "
+        await ctx.send("Transaction will be forwarded to the cycle with data {}, you will get a new message when "
                        "the transaction is validated".format(unique_id))
         try:
             result = await NYZO_CLIENT.async_safe_send(recipient, amount=amount, data=unique_id, key_=PRIVATE_KEY, max_tries=5, verbose=True)
