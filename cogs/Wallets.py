@@ -4,7 +4,7 @@ Nyzo wallets specific cog
 
 from discord.ext import commands
 from modules.database import Db
-from random import randint
+from random import randint, shuffle
 from math import floor, ceil
 from nyzostrings.nyzostringprefilleddata import NyzoStringPrefilledData
 from nyzostrings.nyzostringencoder import NyzoStringEncoder
@@ -13,6 +13,7 @@ from modules.config import CONFIG
 from pynyzo.clienthelpers import NyzoClient
 import time
 import discord
+
 
 
 DB_PATH = 'data/wallets.db'
@@ -101,13 +102,72 @@ class Wallet(commands.Cog):
 
     @commands.command()
     async def tip(self, ctx, user: discord.User, amount: str='1'):
-        """Usage: !tip @user amount' if not specified, amount=1, Send some nyzo to another user"""
+        """Usage: !tip @user amount' if not specified, amount=1, Sends some nyzo to another user"""
         if self.insert_transaction(str(ctx.author.id), str(user.id), floor(float(amount) * 10 ** 6), "tip"):
             await ctx.message.add_reaction('👍')
             await self.safe_send_message(user, "You've been tipped ∩{:0.6f} by {} ({})!"
                                          .format(float(amount), ctx.author.mention, ctx.author.display_name))
         else:
             await ctx.message.add_reaction('👎')
+
+    @commands.command()
+    async def rain(self, ctx, total_amount: str, how_many_users: str='10'):
+        """Usage: !rain total_amount how_many_users' if not specified, how_many_users=10, Sends some nyzo to random users"""
+        try:
+            if "/" in total_amount:
+                data = total_amount.split("/")
+                total_amount = float(data[0])
+                how_many_users = float(data[1])
+
+            total_amount = float(total_amount)
+            how_many_users = int(how_many_users)
+
+            if total_amount <= 0 or how_many_users <= 0:
+                raise ValueError
+
+            if how_many_users > 100:
+                how_many_users = 100
+
+            if how_many_users < 1:
+                how_many_users = 1
+
+            if total_amount > 1000:
+                total_amount = 1000
+
+            if total_amount < 0.1 * how_many_users:
+                how_many_users = int(total_amount / 0.1)
+
+            if self.get_balance(str(ctx.author.id)) < total_amount * 10 ** 6:
+                raise ValueError
+
+            individual_amount = total_amount / how_many_users
+            members = ctx.guild.members
+            shuffle(members)
+
+            final_message = "{} sent ∩{:0.6f} each to: ".format(ctx.author.mention, individual_amount)
+            message = "Yeah! You got ∩{:0.6f} from the rain of {} ({}) from the Nyzo discord!" \
+                .format(individual_amount, ctx.author, ctx.author.display_name)
+
+            for member in members:
+                if how_many_users <= 0:
+                    break
+
+                if str(member.status) != "offline" and not member.bot and member.name != ctx.author.name:
+                    for role in member.roles:
+                        if role.name == "Validated":
+                            if self.insert_transaction(str(ctx.author.id), str(member.id),
+                                                       floor(individual_amount * 10 ** 6), "rain"):
+                                final_message += member.mention + " "
+                                await self.safe_send_message(member, message)
+                                how_many_users -= 1
+                            break
+
+            await ctx.send(final_message)
+            await ctx.message.add_reaction('👍')
+            return
+        except Exception as e:
+            print(e)
+        await ctx.message.add_reaction('👎')
 
     @commands.command()
     async def deposit(self, ctx, block_id: int=-1):
