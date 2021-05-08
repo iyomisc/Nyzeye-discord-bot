@@ -8,7 +8,7 @@ import time
 import json
 
 BALANCES_PATH = 'api/balances.json'
-MARKETS = ["citex", "qtrade", "bihodl", "qbtc", "bilaxy", "hotbit", "hoo"]  # Markets we want to list
+MARKETS = ["citex", "qtrade", "bihodl", "qbtc", "bilaxy", "hotbit", "hoo", "gate"]  # Markets we want to list
 
 
 class Nyzo(commands.Cog):
